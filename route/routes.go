@@ -1,6 +1,7 @@
 package route
 
 import (
+	"mini_project/constant"
 	"mini_project/controller"
 	"mini_project/repository/database"
 	"mini_project/usecase"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/go-playground/validator"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"gorm.io/gorm"
 )
 
@@ -24,11 +26,14 @@ func (cv *customValidator) Validate(i interface{}) error {
 
 func NewRoute(e *echo.Echo, db *gorm.DB) {
 	userRepository := database.NewUserRepository(db)
+	productRepository := database.NewProductRepository(db)
 
 	userUsecase := usecase.NewUserUsecase(userRepository)
+	productUsecase := usecase.NewProductUseCase(productRepository)
 
 	authController := controller.NewAuthController(userUsecase)
 	userController := controller.NewUserController(userUsecase, userRepository)
+	productController := controller.NewProductController(productUsecase, productRepository)
 
 	e.Validator = &customValidator{validator: validator.New()}
 
@@ -36,5 +41,10 @@ func NewRoute(e *echo.Echo, db *gorm.DB) {
 	e.POST("/register/admin", userController.RegisterAdminController)
 	e.POST("/login/user", authController.LoginUserController)
 	e.POST("/login/admin", authController.LoginAdminController)
+	e.GET("/products", productController.GetListProducts)
+
+	admin := e.Group("/admin", middleware.JWT([]byte(constant.SECRET_JWT)))
+	admin.POST("/products", productController.AddProduct)
+	admin.DELETE("/products/:id", productController.DeleteProduct)
 
 }
