@@ -49,7 +49,7 @@ func (u *userUsecase) LoginUser(email, password, role string) (*model.User, erro
 		return nil, echo.NewHTTPError(http.StatusUnauthorized, "Unauthorized")
 	}
 
-	token, err := middleware.CreateToken(user.ID)
+	token, err := middleware.CreateToken(user.ID, user.Role)
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusBadRequest, "error create token")
 	}
