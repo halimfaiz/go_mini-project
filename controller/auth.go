@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"mini_project/middleware"
 	"mini_project/model/payload"
 	"mini_project/usecase"
 	"net/http"
@@ -43,14 +42,6 @@ func (a *authController) LoginUserController(c echo.Context) error {
 		return err
 	}
 
-	token, err := middleware.CreateToken(user.ID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, map[string]interface{}{
-			"message": "user not found",
-		})
-	}
-
-	user.Token = token
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"message": "success login",
 		"user":    user,
@@ -76,14 +67,6 @@ func (a *authController) LoginAdminController(c echo.Context) error {
 		return err
 	}
 
-	token, err := middleware.CreateToken(user.ID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, map[string]interface{}{
-			"message": "user not found",
-		})
-	}
-
-	user.Token = token
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"message": "success login",
 		"user":    user,
