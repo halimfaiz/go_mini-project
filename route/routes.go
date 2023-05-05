@@ -27,13 +27,16 @@ func (cv *customValidator) Validate(i interface{}) error {
 func NewRoute(e *echo.Echo, db *gorm.DB) {
 	userRepository := database.NewUserRepository(db)
 	productRepository := database.NewProductRepository(db)
+	cartRepository := database.NewCartRepository(db)
 
 	userUsecase := usecase.NewUserUsecase(userRepository)
 	productUsecase := usecase.NewProductUseCase(productRepository)
+	cartUsecase := usecase.NewCartUseCase(cartRepository, productRepository)
 
 	authController := controller.NewAuthController(userUsecase)
 	userController := controller.NewUserController(userUsecase, userRepository)
 	productController := controller.NewProductController(productUsecase, productRepository)
+	cartController := controller.NewCartController(cartUsecase)
 
 	e.Validator = &customValidator{validator: validator.New()}
 
@@ -42,6 +45,11 @@ func NewRoute(e *echo.Echo, db *gorm.DB) {
 	e.POST("/login/user", authController.LoginUserController)
 	e.POST("/login/admin", authController.LoginAdminController)
 	e.GET("/products", productController.GetListProducts)
+
+	user := e.Group("/user", middleware.JWT([]byte(constant.SECRET_JWT)))
+	user.GET("/carts", cartController.GetCartByUserID)
+	user.POST("/carts/add", cartController.AddProductToCart)
+	user.POST("/carts/remove", cartController.RemoveProductFromCart)
 
 	admin := e.Group("/admin", middleware.JWT([]byte(constant.SECRET_JWT)))
 	admin.POST("/products", productController.AddProduct)
