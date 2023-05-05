@@ -43,5 +43,7 @@ func InitialMigration() {
 	DB.AutoMigrate(
 		&model.User{},
 		&model.Product{},
+		&model.Cart{},
+		&model.CartProduct{},
 	)
 }
