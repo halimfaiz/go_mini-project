@@ -16,3 +16,6 @@ Admin :
 
 User :
 1. Get List Product
+2. Add Product To Cart
+3. Remove Product From Cart
+4. Get Cart
