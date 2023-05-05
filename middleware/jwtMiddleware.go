@@ -25,9 +25,9 @@ func ExtractTokenAdmin(e echo.Context) (uint, error) {
 	claims := user.Claims.(jwt.MapClaims)
 	if claims["role"] != "admin" {
 		return 0, errors.New("not authorized")
-
 	}
-	return 0, nil
+	userID := claims["userId"]
+	return uint(userID.(float64)), nil
 }
 
 func ExtractTokenUser(e echo.Context) (uint, error) {
@@ -37,5 +37,6 @@ func ExtractTokenUser(e echo.Context) (uint, error) {
 		return 0, errors.New("not authorized")
 
 	}
-	return 0, nil
+	userID := claims["userId"]
+	return uint(userID.(float64)), nil
 }
