@@ -12,6 +12,7 @@ type ProductRepository interface {
 	GetProducts() ([]model.Product, error)
 	AddProduct(product *model.Product) error
 	DeleteProductById(product *model.Product) error
+	UpdateProduct(product *model.Product) error
 }
 
 type productRepository struct {
@@ -41,6 +42,14 @@ func (p *productRepository) GetProducts() ([]model.Product, error) {
 
 func (p *productRepository) AddProduct(product *model.Product) error {
 	err := config.DB.Create(product).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *productRepository) UpdateProduct(product *model.Product) error {
+	err := config.DB.Save(product).Error
 	if err != nil {
 		return err
 	}
