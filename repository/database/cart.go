@@ -11,6 +11,7 @@ type CartRepository interface {
 	CreateCart(cart *model.Cart) error
 	CreateCartProduct(cart *model.CartProduct) error
 	GetCartByUserID(userID uint) (*model.Cart, error)
+	DeleteCart(cart *model.Cart) error
 	UpdateCart(cart *model.Cart) error
 	UpdateCartProduct(cartProduct *model.CartProduct) error
 	DeleteCartProduct(cartProduct *model.CartProduct) error
@@ -42,7 +43,7 @@ func (c *cartRepository) CreateCartProduct(cartProduct *model.CartProduct) error
 
 func (c *cartRepository) GetCartByUserID(userID uint) (*model.Cart, error) {
 	cart := &model.Cart{}
-	err := config.DB.Model(&model.Cart{}).Preload("CartItems.Product").Where("user_id = ? AND status = ?", userID, "active").First(cart).Error
+	err := config.DB.Model(&model.Cart{}).Preload("CartProducts.Product").Where("user_id = ? AND status = ?", userID, "active").First(cart).Error
 	if err != nil {
 		return nil, err
 	}
@@ -64,6 +65,15 @@ func (c *cartRepository) UpdateCartProduct(cartProduct *model.CartProduct) error
 	}
 	return nil
 }
+
+func (c *cartRepository) DeleteCart(cart *model.Cart) error {
+	err := config.DB.Delete(cart).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *cartRepository) DeleteCartProduct(cartProduct *model.CartProduct) error {
 	err := config.DB.Delete(cartProduct).Error
 	if err != nil {
