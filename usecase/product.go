@@ -8,8 +8,9 @@ import (
 
 type ProductUseCase interface {
 	GetProducts() ([]model.Product, error)
-	AddProduct(product *model.Product) error
+	AddProduct(name, description string, price, stock uint) (*model.Product, error)
 	DeleteProductById(id uint) error
+	UpdateProduct(id, stock uint) (*model.Product, error)
 }
 
 type productUseCase struct {
@@ -17,9 +18,7 @@ type productUseCase struct {
 }
 
 func NewProductUseCase(productRepository database.ProductRepository) *productUseCase {
-	return &productUseCase{
-		productRepository: productRepository,
-	}
+	return &productUseCase{productRepository: productRepository}
 }
 
 func (p *productUseCase) GetProducts() (products []model.Product, err error) {
@@ -30,14 +29,47 @@ func (p *productUseCase) GetProducts() (products []model.Product, err error) {
 	return products, nil
 }
 
-func (p *productUseCase) AddProduct(product *model.Product) error {
-	err := p.productRepository.AddProduct(product)
+func (p *productUseCase) AddProduct(name, description string, price, stock uint) (*model.Product, error) {
+	products, err := p.productRepository.GetProducts()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	for _, v := range products {
+		if v.Name == name {
+			return nil, errors.New("product already exist")
+		}
+	}
+	product := &model.Product{
+		Name:        name,
+		Description: description,
+		Price:       price,
+		Stock:       stock,
+	}
+
+	err = p.productRepository.AddProduct(product)
+	if err != nil {
+		return nil, err
+	}
+	return product, nil
 }
 
+func (p *productUseCase) UpdateProduct(id, stock uint) (*model.Product, error) {
+	product, err := p.productRepository.GetProductById(id)
+	if err != nil {
+		return nil, err
+	}
+	if stock <= 0 {
+		return nil, errors.New("stock can't be minus")
+	} else {
+
+		product.Stock = stock
+		err = p.productRepository.UpdateProduct(product)
+		if err != nil {
+			return nil, err
+		}
+		return product, nil
+	}
+}
 func (p *productUseCase) DeleteProductById(id uint) error {
 	product, err := p.productRepository.GetProductById(id)
 	if err != nil {
