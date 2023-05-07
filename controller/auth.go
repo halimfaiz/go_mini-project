@@ -18,18 +18,12 @@ type authController struct {
 }
 
 func NewAuthController(userUsecase usecase.UserUsecase) *authController {
-	return &authController{
-		userUsecase,
-	}
+	return &authController{userUsecase}
 }
 
 func (a *authController) LoginUserController(c echo.Context) error {
 	payload := payload.LoginRequest{}
-	if err := c.Bind(&payload); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, map[string]interface{}{
-			"message": "error binding request body",
-		})
-	}
+	c.Bind(&payload)
 
 	if err := c.Validate(payload); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, map[string]interface{}{
@@ -37,9 +31,11 @@ func (a *authController) LoginUserController(c echo.Context) error {
 		})
 	}
 
-	user, err := a.userUsecase.LoginUser(payload.Email, payload.Password, "user")
+	user, err := a.userUsecase.LoginUser(payload.Email, payload.Password, "USER")
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, map[string]interface{}{
+			"message": err.Error(),
+		})
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
@@ -50,11 +46,7 @@ func (a *authController) LoginUserController(c echo.Context) error {
 
 func (a *authController) LoginAdminController(c echo.Context) error {
 	payload := payload.LoginRequest{}
-	if err := c.Bind(&payload); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, map[string]interface{}{
-			"message": "error binding request body",
-		})
-	}
+	c.Bind(&payload)
 
 	if err := c.Validate(payload); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, map[string]interface{}{
@@ -62,9 +54,11 @@ func (a *authController) LoginAdminController(c echo.Context) error {
 		})
 	}
 
-	user, err := a.userUsecase.LoginUser(payload.Email, payload.Password, "admin")
+	user, err := a.userUsecase.LoginUser(payload.Email, payload.Password, "ADMIN")
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, map[string]interface{}{
+			"message": err.Error(),
+		})
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
