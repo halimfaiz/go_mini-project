@@ -33,11 +33,14 @@ func (c *cartUseCase) AddProductToCart(userID, productID, quantity uint) error {
 	if err != nil {
 		return errors.New("product not found")
 	}
+	if product.Stock < quantity {
+		return fmt.Errorf("cannot add %d product. theres only %d product left", quantity, product.Stock)
+	}
 
 	//check if user have cart.
 	cart, err := c.cartRepository.GetCartByUserID(userID)
 	if err != nil {
-		// Jika user belum memiliki cart, maka buat cart baru dengan status "active"
+		// if user doenst have cart. create cart with status "active"
 		cart = &model.Cart{
 			UserID: userID,
 			Status: "active",
@@ -50,12 +53,13 @@ func (c *cartUseCase) AddProductToCart(userID, productID, quantity uint) error {
 
 	//check if product already exist in cart
 	var cartProduct *model.CartProduct
-	for _, cp := range cart.CartItems {
+	for _, cp := range cart.CartProducts {
 		if cp.Product.ID == productID {
 			cartProduct = &cp
 			break
 		}
 	}
+
 	//if product exist in cart
 	if cartProduct != nil {
 		cartProduct.Quantity += quantity
@@ -74,6 +78,7 @@ func (c *cartUseCase) AddProductToCart(userID, productID, quantity uint) error {
 			return err
 		}
 	}
+
 	cart.TotalPrice += (product.Price * quantity)
 	err = c.cartRepository.UpdateCart(cart)
 	if err != nil {
@@ -87,9 +92,10 @@ func (c *cartUseCase) RemoveProductFromCart(userID, productID, quantity uint) er
 	if err != nil {
 		return err
 	}
+
 	//check if product already exist in cart
 	var cartProduct *model.CartProduct
-	for _, cp := range cart.CartItems {
+	for _, cp := range cart.CartProducts {
 		if cp.Product.ID == productID {
 			cartProduct = &cp
 			break
@@ -97,7 +103,7 @@ func (c *cartUseCase) RemoveProductFromCart(userID, productID, quantity uint) er
 	}
 
 	if cartProduct == nil {
-		return fmt.Errorf("product is not available in the cart")
+		return errors.New("product is not available in the cart")
 	}
 
 	if cartProduct.Quantity < quantity {
