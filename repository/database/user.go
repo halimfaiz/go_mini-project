@@ -10,8 +10,10 @@ import (
 
 type UserRepository interface {
 	CreateUser(user *model.User) error
+	GetUserByID(id uint) (*model.User, error)
 	GetUserByEmail(email string) (*model.User, error)
 	LoginUser(email, password string) error
+	UpdateUser(user *model.User) error
 }
 
 type userRepository struct {
@@ -27,6 +29,14 @@ func (u *userRepository) CreateUser(user *model.User) error {
 		return err
 	}
 	return nil
+}
+
+func (u *userRepository) GetUserByID(id uint) (*model.User, error) {
+	var user model.User
+	if err := config.DB.Where("id = ?", id).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
 
 func (u *userRepository) GetUserByEmail(email string) (*model.User, error) {
@@ -47,6 +57,14 @@ func (u *userRepository) LoginUser(email, password string) error {
 	}
 	if user.Password != password {
 		return errors.New("wrong password")
+	}
+	return nil
+}
+
+func (u *userRepository) UpdateUser(user *model.User) error {
+	err := config.DB.Save(user).Error
+	if err != nil {
+		return err
 	}
 	return nil
 }
