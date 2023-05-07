@@ -45,5 +45,8 @@ func InitialMigration() {
 		&model.Product{},
 		&model.Cart{},
 		&model.CartProduct{},
+		&model.Order{},
+		&model.OrderItem{},
+		&model.Payment{},
 	)
 }
