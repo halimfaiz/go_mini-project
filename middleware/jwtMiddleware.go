@@ -20,10 +20,18 @@ func CreateToken(userId uint, role string) (string, error) {
 	return token.SignedString([]byte(constant.SECRET_JWT))
 }
 
+func ExtractToken(e echo.Context) (uint, error) {
+	user := e.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+
+	userID := claims["userId"]
+	return uint(userID.(float64)), nil
+}
+
 func ExtractTokenAdmin(e echo.Context) (uint, error) {
 	user := e.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
-	if claims["role"] != "admin" {
+	if claims["role"] != "ADMIN" {
 		return 0, errors.New("not authorized")
 	}
 	userID := claims["userId"]
@@ -33,7 +41,7 @@ func ExtractTokenAdmin(e echo.Context) (uint, error) {
 func ExtractTokenUser(e echo.Context) (uint, error) {
 	user := e.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
-	if claims["role"] != "user" {
+	if claims["role"] != "USER" {
 		return 0, errors.New("not authorized")
 
 	}
