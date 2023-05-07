@@ -10,5 +10,6 @@ type User struct {
 	Address  string `json:"address"`
 	Phone    string `json:"phone"`
 	Role     string `json:"role"`
+	Saldo    uint   `json:"saldo"`
 	Token    string `gorm:"-"`
 }
