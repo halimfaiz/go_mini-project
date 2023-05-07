@@ -35,7 +35,7 @@ func NewRoute(e *echo.Echo, db *gorm.DB) {
 	productUsecase := usecase.NewProductUseCase(productRepository)
 	cartUsecase := usecase.NewCartUseCase(cartRepository, productRepository)
 	orderUsecase := usecase.NewOrderUsecase(orderRepository, cartRepository, userRepository, productRepository)
-	paymentUsecase := usecase.NewPaymentUseCase(paymentRepository, userRepository, orderRepository, cartRepository)
+	paymentUsecase := usecase.NewPaymentUseCase(paymentRepository, userRepository, orderRepository)
 
 	authController := controller.NewAuthController(userUsecase)
 	userController := controller.NewUserController(userUsecase)
