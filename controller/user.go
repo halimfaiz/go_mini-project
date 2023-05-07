@@ -1,10 +1,8 @@
 package controller
 
 import (
-	"errors"
-	"mini_project/model"
+	"mini_project/middleware"
 	"mini_project/model/payload"
-	"mini_project/repository/database"
 	"mini_project/usecase"
 	"net/http"
 
@@ -14,21 +12,15 @@ import (
 type UserController interface {
 	RegisterUserController(c echo.Context) error
 	RegisterAdminController(c echo.Context) error
+	TopUpSaldoController(c echo.Context) error
 }
 
 type userController struct {
-	userUsecase    usecase.UserUsecase
-	userRepository database.UserRepository
+	userUsecase usecase.UserUsecase
 }
 
-func NewUserController(
-	userUsecase usecase.UserUsecase,
-	userRepository database.UserRepository,
-) *userController {
-	return &userController{
-		userUsecase,
-		userRepository,
-	}
+func NewUserController(userUsecase usecase.UserUsecase) *userController {
+	return &userController{userUsecase: userUsecase}
 }
 
 func (u *userController) RegisterUserController(c echo.Context) error {
@@ -41,23 +33,17 @@ func (u *userController) RegisterUserController(c echo.Context) error {
 		})
 	}
 
-	if _, err := u.userRepository.GetUserByEmail(req.Email); err == nil {
+	if _, err := u.userUsecase.GetUserByEmail(req.Email); err == nil {
 		return echo.NewHTTPError(http.StatusBadRequest, map[string]interface{}{
 			"message": "Email already registered",
 		})
 	}
 
-	user := &model.User{
-		Name:     req.Name,
-		Email:    req.Email,
-		Password: req.Password,
-		Address:  req.Address,
-		Phone:    req.Phone,
-		Role:     "user",
-	}
-	if err := u.userUsecase.CreateUser(user); err != nil {
+	user, err := u.userUsecase.CreateUser(&req)
+	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, map[string]interface{}{
 			"message": "Failed to register user",
+			"error":   err.Error(),
 		})
 	}
 	return c.JSON(http.StatusOK, map[string]interface{}{
@@ -75,25 +61,14 @@ func (u *userController) RegisterAdminController(c echo.Context) error {
 			"message": "Invalid request payload",
 		})
 	}
-
-	if _, err := u.userRepository.GetUserByEmail(req.Email); err == nil {
+	if _, err := u.userUsecase.GetUserByEmail(req.Email); err == nil {
 		return echo.NewHTTPError(http.StatusBadRequest, map[string]interface{}{
 			"message": "Email already registered",
 		})
 	}
 
-	admin := &model.User{
-		Name:     req.Name,
-		Email:    req.Email,
-		Password: req.Password,
-		Address:  req.Address,
-		Phone:    req.Phone,
-		Role:     "admin",
-	}
-	if admin.Role != "admin" {
-		return errors.New("invalid role")
-	}
-	if err := u.userUsecase.CreateUser(admin); err != nil {
+	admin, err := u.userUsecase.CreateAdmin(&req)
+	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, map[string]interface{}{
 			"message": "Failed to register admin",
 		})
@@ -101,5 +76,34 @@ func (u *userController) RegisterAdminController(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"message": "User registered successfully",
 		"user":    admin,
+	})
+}
+
+func (u *userController) TopUpSaldoController(c echo.Context) error {
+	userID, err := middleware.ExtractTokenUser(c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, map[string]interface{}{
+			"message": "only users can access this feature",
+			"error":   err.Error(),
+		})
+	}
+	payload := payload.TopUpRequest{}
+	c.Bind(&payload)
+
+	if err := c.Validate(payload); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, map[string]interface{}{
+			"message": "Invalid request payload",
+		})
+	}
+
+	user, err := u.userUsecase.TopUp(userID, payload.Saldo)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, map[string]interface{}{
+			"message": err.Error(),
+		})
+	}
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "success Top Up Saldo",
+		"user":    user,
 	})
 }
