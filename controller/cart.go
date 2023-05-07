@@ -37,17 +37,15 @@ func (cc *cartController) AddProductToCart(c echo.Context) error {
 	}
 
 	req := payload.AddProductToCartRequest{}
-	if err := c.Bind(&req); err != nil {
+	c.Bind(&req)
+
+	if err := c.Validate(req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, map[string]interface{}{
-			"message": "invalid Request Payload",
-			"error":   err.Error(),
+			"message": "Invalid request payload",
 		})
 	}
-	userID := userId
-	productID := req.ProductID
-	quantity := req.Quantity
 
-	err = cc.cartUsecase.AddProductToCart(userID, productID, quantity)
+	err = cc.cartUsecase.AddProductToCart(userId, req.ProductID, req.Quantity)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, map[string]interface{}{
 			"Error": err.Error(),
@@ -68,17 +66,15 @@ func (cc *cartController) RemoveProductFromCart(c echo.Context) error {
 	}
 
 	req := payload.AddProductToCartRequest{}
-	if err := c.Bind(&req); err != nil {
+	c.Bind(&req)
+
+	if err := c.Validate(req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, map[string]interface{}{
-			"message": "invalid Request Payload",
-			"error":   err.Error(),
+			"message": "Invalid request payload",
 		})
 	}
-	userID := userId
-	productID := req.ProductID
-	quantity := req.Quantity
 
-	err = cc.cartUsecase.RemoveProductFromCart(userID, productID, quantity)
+	err = cc.cartUsecase.RemoveProductFromCart(userId, req.ProductID, req.Quantity)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, map[string]interface{}{
 			"Error": err.Error(),
@@ -103,11 +99,6 @@ func (cc *cartController) GetCartByUserID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, map[string]interface{}{
 			"message": "Cart Not Found",
 			"error":   err.Error(),
-		})
-	}
-	if cart.UserID != userID {
-		return echo.NewHTTPError(http.StatusUnauthorized, map[string]interface{}{
-			"message": "Unauthorized access to cart",
 		})
 	}
 	return c.JSON(http.StatusOK, map[string]interface{}{
