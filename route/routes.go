@@ -28,15 +28,21 @@ func NewRoute(e *echo.Echo, db *gorm.DB) {
 	userRepository := database.NewUserRepository(db)
 	productRepository := database.NewProductRepository(db)
 	cartRepository := database.NewCartRepository(db)
+	orderRepository := database.NewOrderRepository(db)
+	paymentRepository := database.NewPaymentRepository(db)
 
 	userUsecase := usecase.NewUserUsecase(userRepository)
 	productUsecase := usecase.NewProductUseCase(productRepository)
 	cartUsecase := usecase.NewCartUseCase(cartRepository, productRepository)
+	orderUsecase := usecase.NewOrderUsecase(orderRepository, cartRepository, userRepository, productRepository)
+	paymentUsecase := usecase.NewPaymentUseCase(paymentRepository, userRepository, orderRepository, cartRepository)
 
 	authController := controller.NewAuthController(userUsecase)
-	userController := controller.NewUserController(userUsecase, userRepository)
-	productController := controller.NewProductController(productUsecase, productRepository)
+	userController := controller.NewUserController(userUsecase)
+	productController := controller.NewProductController(productUsecase)
 	cartController := controller.NewCartController(cartUsecase)
+	orderController := controller.NewOrderController(orderUsecase)
+	paymentController := controller.NewPaymentController(paymentUsecase, orderUsecase)
 
 	e.Validator = &customValidator{validator: validator.New()}
 
@@ -44,15 +50,23 @@ func NewRoute(e *echo.Echo, db *gorm.DB) {
 	e.POST("/register/admin", userController.RegisterAdminController)
 	e.POST("/login/user", authController.LoginUserController)
 	e.POST("/login/admin", authController.LoginAdminController)
-	e.GET("/products", productController.GetListProducts)
+	e.GET("/products", productController.GetListProductsController)
 
 	user := e.Group("/user", middleware.JWT([]byte(constant.SECRET_JWT)))
 	user.GET("/carts", cartController.GetCartByUserID)
 	user.POST("/carts/add", cartController.AddProductToCart)
 	user.POST("/carts/remove", cartController.RemoveProductFromCart)
+	user.POST("/orders", orderController.CreateOrderController)
+	user.GET("/orders", orderController.GetOrderController)
+	user.POST("/topup", userController.TopUpSaldoController)
+	user.POST("/orders/checkout/:id", paymentController.CheckoutController)
 
 	admin := e.Group("/admin", middleware.JWT([]byte(constant.SECRET_JWT)))
-	admin.POST("/products", productController.AddProduct)
-	admin.DELETE("/products/:id", productController.DeleteProduct)
+	admin.POST("/products", productController.AddProductController)
+	admin.PUT("/products/:id", productController.UpdateProductController)
+	admin.DELETE("/products/:id", productController.DeleteProductController)
+	admin.GET("/orders/pending", orderController.GetOrderByStatusController)
+	admin.GET("/orders", orderController.GetListOrderController)
+	admin.PUT("/orders/:id", orderController.UpdateOrderStatusController)
 
 }
