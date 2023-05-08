@@ -13,10 +13,10 @@ var DB *gorm.DB
 func InitDB() *gorm.DB {
 
 	config := map[string]string{
-		"DB_Username": "root",
+		"DB_Username": "alta",
 		"DB_Password": "root",
 		"DB_Port":     "3306",
-		"DB_Host":     "127.0.0.1",
+		"DB_Host":     "localhost",
 		"DB_Name":     "mini_project",
 	}
 
