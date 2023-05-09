@@ -13,7 +13,7 @@ var DB *gorm.DB
 func InitDB() *gorm.DB {
 
 	config := map[string]string{
-		"DB_Username": "root",
+		"DB_Username": "alta",
 		"DB_Password": "root",
 		"DB_Port":     "3306",
 		"DB_Host":     "localhost",
