@@ -57,6 +57,15 @@ func (o *orderUsecase) CreateOrder(userId uint, name, address, phone string) (or
 	if err != nil {
 		return nil, errors.New("cart not found")
 	}
+	for _, v := range cart.CartProducts {
+		product, err := o.productRepository.GetProductById(v.ProductID)
+		if err != nil {
+			return nil, err
+		}
+		if v.Quantity > product.Stock {
+			return nil, fmt.Errorf("can not order %d %s. there are only %d available", v.Quantity, product.Name, product.Stock)
+		}
+	}
 
 	order = &model.Order{
 		UserID:     userId,
@@ -89,15 +98,12 @@ func (o *orderUsecase) CreateOrder(userId uint, name, address, phone string) (or
 		if err != nil {
 			return nil, err
 		}
-		if product.Stock < v.Product.Stock {
-			return nil, fmt.Errorf("cannot order %d product. theres only %d product left", v.Product.Stock, product.Stock)
-		} else {
-			product.Stock -= v.Product.Stock
-			err = o.productRepository.UpdateProduct(product)
-			if err != nil {
-				return nil, err
-			}
+		product.Stock -= v.Quantity
+		err = o.productRepository.UpdateProduct(product)
+		if err != nil {
+			return nil, err
 		}
+
 	}
 	order.OrderItems = orderItems
 	err = o.orderRepository.UpdateOrder(order)

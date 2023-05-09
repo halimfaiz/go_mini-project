@@ -47,16 +47,6 @@ func (p *paymentUseCase) Checkout(userID, orderID uint) (payment *model.Payment,
 	}
 
 	if order.Status == "UNPAID" {
-		err = p.paymentRepository.Checkout(payment)
-		if err != nil {
-			return nil, err
-		}
-		order.Status = "PAID"
-		err = p.orderRepository.UpdateOrder(order)
-		if err != nil {
-			return nil, err
-		}
-
 		if user.Saldo < payment.TotalPrice {
 			return nil, errors.New("insufficient balance")
 		} else {
@@ -65,6 +55,15 @@ func (p *paymentUseCase) Checkout(userID, orderID uint) (payment *model.Payment,
 			if err != nil {
 				return nil, err
 			}
+		}
+		err = p.paymentRepository.Checkout(payment)
+		if err != nil {
+			return nil, err
+		}
+		order.Status = "PAID"
+		err = p.orderRepository.UpdateOrder(order)
+		if err != nil {
+			return nil, err
 		}
 		return payment, nil
 	} else {
